@@ -84,7 +84,18 @@ h1.title { font-size: 30px; line-height: 1.15; margin: 26px 0 4px; font-weight: 
 .resume small { display: block; color: var(--teal); font-weight: 700; font-size: 12px; letter-spacing: .04em; }
 .resume span { font-weight: 600; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-.btn { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 14px; font-weight: 600; }
+.sitecnt { display: block; font-style: normal; font-size: 12px; font-weight: 700; color: var(--teal); margin-top: 2px; }
+.sites { display: grid; gap: 10px; margin-top: 18px; }
+.site { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); overflow: hidden; }
+.site.cur { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+.site-open { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: none; padding: 16px 16px 10px; }
+.site-open div { flex: 1; min-width: 0; }
+.site-open b { display: block; font-size: 19px; overflow-wrap: anywhere; }
+.site-open small { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.site-open .go { color: var(--ink-2); font-size: 22px; }
+.site-act { display: flex; gap: 18px; padding: 0 16px 12px; }
+.link.danger { color: var(--danger); }
+.btn { 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 14px; font-weight: 600; }
 
 /* screen 2 photo background */
 .photo-bg { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
@@ -138,6 +149,9 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
 @media (min-width: 480px) { .nums { grid-template-columns: repeat(8, 1fr); } }
 .key { position: relative; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 0; aspect-ratio: 1 / 1;
   font-family: var(--f-mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
+.nums.wide { grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 480px) { .nums.wide { grid-template-columns: repeat(4, 1fr); } }
+.nums.wide .key { aspect-ratio: auto; padding: 16px 4px; font-size: 15px; }
 .key.has { border-color: var(--teal); background: var(--teal-soft); }
 .key .n { position: absolute; top: 3px; right: 5px; font-size: 10px; color: var(--teal); }
 .key[aria-pressed="true"] { background: var(--mark); color: var(--mark-ink); border-color: var(--mark-ink); }
@@ -159,6 +173,18 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
 .del { position: absolute; top: -7px; right: -7px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--surface);
   background: var(--danger); color: #fff; font-size: 18px; font-weight: 700; line-height: 1; padding: 0; display: grid; place-items: center; z-index: 1; }
 .thumbs .del { top: 4px; right: 4px; }
+.star { position: absolute; top: -7px; left: -7px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--surface);
+  background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1; padding: 0; display: grid; place-items: center; z-index: 1; }
+.star.on { background: var(--mark); color: var(--mark-ink); }
+.thumbs .star { top: 4px; left: 4px; }
+.link { border: 0; background: none; color: var(--teal); font-weight: 700; font-size: 14px; padding: 4px 2px; text-decoration: underline; text-underline-offset: 3px; }
+.dialog { max-height: calc(100% - 32px); overflow-y: auto; }
+.dialog .field { margin-bottom: 12px; }
+.dialog .input, .dialog .select { font-size: 16px; padding: 12px; }
+.dialog .err { margin-top: 0; }
+.row .go { background: var(--teal); color: var(--teal-ink); border-color: var(--teal); }
+#sheetFav[aria-pressed="true"] { background: var(--mark); color: var(--mark-ink); border-color: var(--mark-ink); }
+.galbar { display: flex; justify-content: flex-end; margin-top: 10px; }
 
 .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -238,15 +264,19 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     <div class="stack">
       <button class="fac" data-fac="tunnel">
         <svg viewBox="0 0 48 48"><path d="M6 40V24a18 18 0 0 1 36 0v16"/><path d="M14 40V25a10 10 0 0 1 20 0v15"/><path d="M3 40h42"/></svg>
-        <div><b>터널</b><small>라이닝 · 포장부 · 갱문 등</small></div><span class="go">›</span>
+        <div><b>터널</b><small>라이닝 · 포장부 · 갱문 등</small><em class="sitecnt" id="cnt-tunnel"></em></div><span class="go">›</span>
+      </button>
+      <button class="fac" data-fac="wall">
+        <svg viewBox="0 0 48 48"><path d="M9 40V9h8l5 31z"/><path d="M17 9c9 2 18 5 27 6"/><path d="M3 40h42"/><path d="M12 18v1M12 28v1"/></svg>
+        <div><b>옹벽</b><small>전면부 · 상부 (20 단위 구간)</small><em class="sitecnt" id="cnt-wall"></em></div><span class="go">›</span>
+      </button>
+      <button class="fac" data-fac="slope">
+        <svg viewBox="0 0 48 48"><path d="M4 40h40V12z"/><path d="M14 40l7-7M24 40l10-10M34 40l6-6"/></svg>
+        <div><b>비탈면</b><small>하부 · 포장부 · 배수로 · 소단 등</small><em class="sitecnt" id="cnt-slope"></em></div><span class="go">›</span>
       </button>
       <button class="fac soon" data-fac="bridge">
         <svg viewBox="0 0 48 48"><path d="M3 20h42"/><path d="M8 20v18M40 20v18"/><path d="M8 38a16 14 0 0 1 32 0"/><path d="M3 42h42"/></svg>
         <div><b>교량</b><small>입력 항목 준비 중</small></div><span class="go">›</span>
-      </button>
-      <button class="fac soon" data-fac="slope">
-        <svg viewBox="0 0 48 48"><path d="M4 40h40V12z"/><path d="M14 40l7-7M24 40l10-10M34 40l6-6"/></svg>
-        <div><b>비탈면</b><small>입력 항목 준비 중</small></div><span class="go">›</span>
       </button>
     </div>
     <button class="resume" id="resume" hidden><small>이어서 촬영</small><span id="resumeText"></span></button>
@@ -256,22 +286,35 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     </div>
   </section>
 
+  <!-- 1-1. 내가 만든 시설물 목록 -->
+  <section id="s-sites" hidden>
+    <h1 class="title" id="sitesTitle">터널 목록</h1>
+    <p class="lead" id="sitesLead"></p>
+    <button class="primary" id="addSite" type="button">+ 새 터널 추가</button>
+    <div class="sites" id="siteList"></div>
+  </section>
+
   <!-- 2. 터널명 · span -->
   <section id="s-setup" hidden>
     <h1 class="title" id="setupTitle">터널</h1>
-    <p class="lead">시설물 정보를 입력하세요.</p>
+    <p class="lead" id="setupLead">시설물 정보를 입력하세요.</p>
     <form id="setupForm" class="glass" novalidate>
       <div class="field">
         <label for="facName" id="facNameLabel">터널명</label>
         <input class="input" id="facName" type="text" autocomplete="off" maxlength="40" placeholder="예: 드림터널">
       </div>
       <div class="field">
-        <label for="span">span</label>
-        <input class="input" id="span" type="number" inputmode="numeric" min="1" max="999" placeholder="예: 120">
-        <span class="help">부재별 번호를 1부터 이 값까지 고를 수 있습니다.</span>
+        <label for="span" id="sizeLabel">span</label>
+        <input class="input" id="span" type="text" inputmode="decimal" autocomplete="off" maxlength="8" placeholder="예: 120">
+        <span class="help" id="sizeHelp">부재별 번호를 1부터 이 값까지 고를 수 있습니다.</span>
+      </div>
+      <div class="field" id="bermField" hidden>
+        <label for="berms">소단</label>
+        <input class="input" id="berms" type="text" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="예: 3">
+        <span class="help">입력한 수만큼 1소단, 2소단 … 버튼이 생깁니다. 소단이 없으면 0을 입력하세요.</span>
       </div>
       <div class="err" id="setupErr"></div>
-      <button class="primary" type="submit">확인</button>
+      <button class="primary" type="submit" id="setupBtn">확인</button>
     </form>
     <div class="bgtools">
       <button type="button" id="bgBtn">배경 사진 바꾸기</button>
@@ -283,7 +326,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   <!-- 3. 부재명 -->
   <section id="s-member" hidden>
     <h1 class="title">부재명</h1>
-    <p class="lead" id="memberLead"></p>
+    <p class="lead"><span id="memberLead"></span> <button class="link" id="editFacBtn" type="button">✎ 수정</button></p>
     <div class="members" id="memberGrid"></div>
   </section>
 
@@ -294,7 +337,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     <div class="here"><span class="path" id="herePath"></span><span class="n" id="hereCount"></span></div>
     <div class="recent" id="recent"></div>
     <div id="spanBox" hidden>
-      <div class="sublabel"><span>span 번호 <span id="spanDone" class="done"></span></span>
+      <div class="sublabel"><span><span id="gridLabel">span 번호</span> <span id="spanDone" class="done"></span></span>
         <span class="seg" role="group" aria-label="정렬">
           <button data-order="asc" aria-pressed="true">오름차순 ↑</button><button data-order="desc" aria-pressed="false">내림차순 ↓</button>
         </span>
@@ -318,6 +361,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   <section id="s-gallery" hidden>
     <h1 class="title">사진함</h1>
     <div class="chips" id="galChips"></div>
+    <div class="galbar" id="galBar" hidden><button class="link" id="galEdit" type="button"></button></div>
     <div id="galList"></div>
   </section>
 
@@ -333,7 +377,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
       <div class="parts" id="parts" hidden></div>
       <div class="storage" id="storage"></div>
     </div>
-    <p class="note">파일 이름은 <code>대전1터널_라이닝_12_001.jpg</code> 형식이며, 촬영 목록(사진목록.csv)이 함께 들어갑니다. 사진이 많으면 약 1GB씩 여러 ZIP으로 나눠 저장되고, 모두 같은 곳에 풀면 폴더가 하나로 합쳐집니다.</p>
+    <p class="note">즐겨찾기한 사진은 ZIP 안 <code>즐겨찾기/</code> 폴더에 사본이 한 번 더 들어갑니다. 파일 이름은 <code>대전1터널_라이닝_12_001.jpg</code> 형식이며, 촬영 목록(사진목록.csv)이 함께 들어갑니다. 사진이 많으면 약 1GB씩 여러 ZIP으로 나눠 저장되고, 모두 같은 곳에 풀면 폴더가 하나로 합쳐집니다.</p>
   </section>
 </div>
 
@@ -352,6 +396,10 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     <img id="sheetImg" alt="">
     <div><div class="path" id="sheetPath"></div><small id="sheetInfo"></small></div>
     <div class="row">
+      <button id="sheetFav" aria-pressed="false">☆ 즐겨찾기</button>
+      <button id="sheetEdit">✎ 정보 수정</button>
+    </div>
+    <div class="row">
       <button id="sheetClose">닫기</button>
       <button class="danger" id="sheetDel">삭제</button>
     </div>
@@ -367,36 +415,107 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     </div>
   </div>
 </div>
+<div class="sheet center" id="editDlg" hidden role="dialog" aria-modal="true" aria-labelledby="eTitle">
+  <form class="dialog" id="editForm" novalidate>
+    <p><b id="eTitle">정보 수정</b><small id="eSub"></small></p>
+    <div id="eBody"></div>
+    <div class="err" id="eErr"></div>
+    <div class="row">
+      <button type="button" id="eNo">취소</button>
+      <button type="submit" class="go" id="eYes">저장</button>
+    </div>
+  </form>
+</div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 (() => {
-  // 시설물별 부재 구성. sub: "span" = 1~span 번호, "ends" = 시점부/종점부, "" = 세부 구분 없음
+  // 시설물별 부재 구성. sub: "span" = 1~span 번호, "range20" = 0부터 20씩 나눈 연장 구간, "ends" = 시점부/종점부, "" = 세부 구분 없음
   const FAC = {
-    tunnel: { label: "터널", nameLabel: "터널명", namePh: "예: 드림터널", members: [
+    tunnel: { label: "터널", nameLabel: "터널명", namePh: "예: 드림터널",
+      sizeLabel: "span", sizePh: "예: 120", sizeHelp: "부재별 번호를 1부터 이 값까지 고를 수 있습니다.", sizeInt: true, sizeMax: 999, members: [
       ["라이닝", "span"], ["타일부", "span"], ["포장부", "span"], ["공동구", "span"], ["배수시설", "span"],
       ["갱문", "ends"], ["옹벽", "ends"], ["갱문 배수로", "ends"], ["피난연락갱", ""], ["기타시설", "span"] ] },
+    wall: { label: "옹벽", nameLabel: "옹벽명", namePh: "예: 드림옹벽",
+      sizeLabel: "연장", sizePh: "예: 37", sizeHelp: "전면부 · 상부 구간을 0부터 20씩 나눠 고를 수 있습니다.", sizeInt: false, sizeMax: 10000, members: [
+      ["전면부", "range20"], ["상부", "range20"] ] },
+    slope: { label: "비탈면", nameLabel: "비탈면명", namePh: "예: 드림비탈면",
+      sizeLabel: "연장", sizePh: "예: 85", sizeHelp: "모든 항목을 0부터 20씩 나눈 구간으로 고를 수 있습니다.", sizeInt: false, sizeMax: 10000, berms: true, members: [
+      ["하부", "range20"], ["포장부", "range20"], ["전경", "range20"], ["상부 자연사면", "range20"], ["배수로", "range20"] ] },
     bridge: { label: "교량", members: null },
-    slope: { label: "비탈면", members: null },
   };
+  const STEP = 20;
+  const numTxt = (v) => String(Math.round(v * 100) / 100);
+  function rangeList(len) {
+    const out = []; for (let a = 0; a < len; a += STEP) out.push(`${numTxt(a)}~${numTxt(Math.min(a + STEP, len))}`);
+    return out;
+  }
+  function subOptions(kind, size) {
+    if (kind === "span") return Array.from({ length: size }, (_, i) => String(i + 1));
+    if (kind === "range20") return rangeList(size);
+    return [];
+  }
+  const sizeName = (fac) => (FAC[fac] && FAC[fac].sizeLabel) || "span";
+  // 연장/span 입력값 검사. 잘못된 값이면 NaN
+  function parseSize(fac, raw) {
+    const f = FAC[fac]; raw = String(raw).trim().replace(/,/g, "");
+    if (!/^\d+(\.\d+)?$/.test(raw)) return NaN;
+    const v = f.sizeInt ? (/^\d+$/.test(raw) ? parseInt(raw, 10) : NaN) : Math.round(parseFloat(raw) * 100) / 100;
+    return v > 0 && v <= f.sizeMax && (!f.sizeInt || v >= 1) ? v : NaN;
+  }
+  const sizeErr = (fac) => { const f = FAC[fac]; return f.sizeInt ? `${f.sizeLabel}은 1부터 ${f.sizeMax} 사이의 정수로 입력하세요.` : `${f.sizeLabel}은 0보다 크고 ${f.sizeMax} 이하인 숫자로 입력하세요.`; };
+  // ---------- 내가 만든 시설물 목록 ----------
+  const loadSites = () => LS.get("fp2-sites", []);
+  const saveSites = (a) => LS.set("fp2-sites", a);
+  function sitesOf(fac) {
+    const map = new Map();
+    for (const x of loadSites()) if (x.fac === fac) map.set(x.name, { ...x, n: 0, last: 0 });
+    for (const r of S.items.values()) {
+      if (r.fac !== fac) continue;
+      let x = map.get(r.facName);
+      if (!x) { x = { fac, name: r.facName, size: r.span, createdAt: r.takenAt, n: 0, last: 0, berms: undefined, _maxB: 0 }; map.set(r.facName, x); }
+      x.n++; x.last = Math.max(x.last, r.takenAt || 0); if (!x.size) x.size = r.span;
+      x._maxB = Math.max(x._maxB || 0, bermNo(r.member));
+    }
+    for (const x of map.values()) if (x.berms === undefined) x.berms = x._maxB || 0;
+    return [...map.values()].sort((a, b) => Math.max(b.last, b.createdAt || 0) - Math.max(a.last, a.createdAt || 0));
+  }
+  const siteExists = (fac, name) => sitesOf(fac).some((x) => x.name === name);
+  function upsertSite(fac, name, size, oldName, berms) {
+    const a = loadSites(), prev = a.find((x) => x.fac === fac && x.name === (oldName || name));
+    const rest = a.filter((x) => !(x.fac === fac && (x.name === name || x.name === oldName)));
+    const e = { fac, name, size, createdAt: (prev && prev.createdAt) || Date.now() };
+    if (FAC[fac] && FAC[fac].berms) e.berms = berms || 0;
+    rest.push(e);
+    saveSites(rest);
+  }
+  const setupFac = () => (S.editSite ? S.editSite.fac : S.fac);
+  const starBtn = (r) => `<button class="star${r.fav ? " on" : ""}" data-fav="${r.id}" aria-pressed="${!!r.fav}" aria-label="즐겨찾기">${r.fav ? "★" : "☆"}</button>`;
   const $ = (id) => document.getElementById(id);
-  const S = { screen: "home", stack: [], fac: null, facName: "", span: 0, member: null, sub: null,
+  const S = { screen: "home", stack: [], fac: null, facName: "", span: 0, berms: 0, member: null, sub: null,
               items: new Map(), galFilter: null, expSel: new Set(), sheetId: null };
   const cloud = { db: null, assets: null };
 
-  const memberList = (fac) => (FAC[fac] && FAC[fac].members) || [];
-  const subKind = (fac, m) => { const x = memberList(fac).find((e) => e[0] === m); return x ? x[1] : ""; };
-  const memberIdx = (fac, m) => { const i = memberList(fac).findIndex((e) => e[0] === m); return i < 0 ? 99 : i; };
+  const BERM_MAX = 50;
+  const bermNo = (m) => { const x = /^(\d+)소단$/.exec(m || ""); return x ? +x[1] : 0; };
+  const memberList = (fac, berms = 0) => {
+    const base = (FAC[fac] && FAC[fac].members) || [];
+    if (!(FAC[fac] && FAC[fac].berms)) return base;
+    return base.concat(Array.from({ length: berms || 0 }, (_, i) => [`${i + 1}소단`, "range20"]));
+  };
+  const subKind = (fac, m) => { const x = memberList(fac).find((e) => e[0] === m); if (x) return x[1]; return FAC[fac] && FAC[fac].berms && bermNo(m) ? "range20" : ""; };
+  const memberIdx = (fac, m) => { const base = memberList(fac), i = base.findIndex((e) => e[0] === m);
+    if (i >= 0) return i; const b = bermNo(m); return FAC[fac] && FAC[fac].berms && b ? base.length + b : 999; };
   const keyOf = (r) => `${r.facName}|${r.member}|${r.sub || ""}`;
   const pathOf = (r) => [r.facName, r.member, r.sub].filter(Boolean).join(" / ");
-  const subCmp = (a, b) => { const x = +a, y = +b; return (a && b && !isNaN(x) && !isNaN(y)) ? x - y : String(a || "").localeCompare(String(b || ""), "ko"); };
+  const subCmp = (a, b) => { const x = parseFloat(a), y = parseFloat(b); return (!isNaN(x) && !isNaN(y) && x !== y) ? x - y : String(a || "").localeCompare(String(b || ""), "ko"); };
   const clean = (s) => String(s).replace(/[\\/:*?"<>|]/g, "_").trim();
 
   // ---------- saved setup ----------
   const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
                set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
   Object.assign(S, LS.get("fp2-setup", {}));
-  const saveSetup = () => LS.set("fp2-setup", { fac: S.fac, facName: S.facName, span: S.span, member: S.member, sub: S.sub });
+  const saveSetup = () => LS.set("fp2-setup", { fac: S.fac, facName: S.facName, span: S.span, berms: S.berms, member: S.member, sub: S.sub });
 
   // ---------- local store ----------
   let idbP = null;
@@ -434,6 +553,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   const idbAll = () => tx("shots", "readonly", (t) => t.objectStore("shots").getAll());
   const idbPut = (rec) => tx("shots", "readwrite", (t) => t.objectStore("shots").put(meta(rec)));
   const idbAdd = (rec, blob) => tx(["shots", "blobs"], "readwrite", (t) => { t.objectStore("blobs").put({ id: rec.id, blob }); t.objectStore("shots").put(meta(rec)); });
+  const idbPutMany = (recs) => tx("shots", "readwrite", (t) => { const st = t.objectStore("shots"); for (const r of recs) st.put(meta(r)); });
   const idbDel = (id) => tx(["shots", "blobs"], "readwrite", (t) => { t.objectStore("shots").delete(id); t.objectStore("blobs").delete(id); });
   const getBlob = async (id) => { const v = await tx("blobs", "readonly", (t) => t.objectStore("blobs").get(id)); return v && v.blob ? v.blob : null; };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -457,7 +577,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   function drawBg(force) {
     const cv = $("tunnelBg"), dpr = Math.min(2, window.devicePixelRatio || 1);
     const W = window.innerWidth, H = window.innerHeight;
-    const custom = LS.get("fp2-bg-" + S.fac, "");
+    const custom = LS.get("fp2-bg-tunnel", "");
     const key = [W, H, dpr, S.fac, custom.length, custom.slice(-32)].join("|");
     if (!force && key === bgKey) return;
     if (custom && bgImgSrc !== custom) { bgImgSrc = custom; bgImg = new Image(); bgImg.onload = () => drawBg(true); bgImg.src = custom; }
@@ -546,7 +666,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   const ready = () => S.screen === "detail" && S.member && S.sub !== null && (subKind(S.fac, S.member) !== "ends" || !!S.sub);
 
   // ---------- navigation ----------
-  const SCREENS = ["home", "setup", "member", "detail", "gallery", "export"];
+  const SCREENS = ["home", "sites", "setup", "member", "detail", "gallery", "export"];
   function go(screen, push = true) {
     if (push && S.screen !== screen) S.stack.push(S.screen);
     S.screen = screen;
@@ -558,37 +678,57 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   // ---------- render ----------
   function renderHeader() {
     $("back").hidden = S.screen === "home";
-    const f = FAC[S.fac];
-    const parts = { home: ["현장 사진 분류함"], setup: [f && f.label], member: [f && f.label, S.facName, S.span && `span ${S.span}`],
+    const f = FAC[S.fac], sf = FAC[setupFac()];
+    const parts = { home: ["현장 사진 분류함"], sites: [f && f.label, "목록"], setup: [sf && sf.label, S.editSite ? "수정" : "새로 추가"], member: [f && f.label, S.facName, S.span && `${sizeName(S.fac)} ${S.span}`],
       detail: [S.facName, S.member], gallery: ["사진함"], export: ["내보내기"] }[S.screen];
     $("crumb").textContent = parts.filter(Boolean).join(" · ");
     const pending = all().filter((r) => !r.synced).length, el = $("status");
     if (cloud.db && cloud.assets) { el.className = "status " + (pending ? "wait" : "on"); el.lastChild.textContent = pending ? `백업 대기 ${pending}` : "백업됨"; }
     else { el.className = "status"; el.lastChild.textContent = "이 기기에 저장"; }
     const dock = S.screen === "detail"; $("dock").hidden = !dock; document.body.classList.toggle("has-dock", dock);
-    const photo = S.screen === "setup" && S.fac === "tunnel";
+    const photo = S.screen === "setup" && setupFac() === "tunnel";
     document.body.classList.toggle("on-photo", photo); $("tunnelBg").hidden = !photo;
     if (photo) drawBg();
   }
 
   function renderHome() {
     $("homeCount").textContent = S.items.size ? `(${S.items.size})` : "";
+    for (const fac of ["tunnel", "wall", "slope"]) { const n = sitesOf(fac).length; $("cnt-" + fac).textContent = n ? `내 ${FAC[fac].label} ${n}개` : ""; }
     const can = S.fac && S.facName && S.member;
     $("resume").hidden = !can;
     if (can) $("resumeText").textContent = [S.facName, S.member, S.sub].filter(Boolean).join(" · ");
   }
 
+  function renderSites() {
+    const f = FAC[S.fac], list = sitesOf(S.fac);
+    $("sitesTitle").textContent = `${f.label} 목록`;
+    $("sitesLead").textContent = list.length ? `점검할 ${f.label}을 고르거나 새로 추가하세요.` : "";
+    $("addSite").textContent = `+ 새 ${f.label} 추가`;
+    if (!list.length) { $("siteList").innerHTML = `<div class="empty"><b>아직 만든 ${f.label}이 없습니다</b>위의 버튼을 눌러 ${f.nameLabel}과 ${f.sizeLabel}을 입력하세요.</div>`; return; }
+    const when = (t) => { if (!t) return ""; const d = new Date(t); return `${d.getMonth() + 1}.${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+    $("siteList").innerHTML = list.map((x) => `<div class="site${x.name === S.facName ? " cur" : ""}">` +
+      `<button class="site-open" data-site="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>${f.sizeLabel} ${x.size || "?"}${f.berms ? ` · 소단 ${x.berms || 0}` : ""} · 사진 ${x.n}장${x.last ? ` · 최근 ${when(x.last)}` : ""}</small></div><span class="go">›</span></button>` +
+      `<div class="site-act"><button class="link" data-site-edit="${esc(x.name)}">✎ 수정</button>` +
+      `<button class="link danger" data-site-del="${esc(x.name)}" data-n="${x.n}">삭제</button></div></div>`).join("");
+  }
+
   function renderSetup() {
-    const f = FAC[S.fac] || FAC.tunnel;
+    const fac = setupFac(), f = FAC[fac] || FAC.tunnel;
+    $("setupLead").textContent = S.editSite ? `${f.label} 정보를 고칩니다. 이 ${f.label}에서 찍은 사진에도 함께 적용됩니다.` : `새 ${f.label} 정보를 입력하세요.`;
+    $("setupBtn").textContent = S.editSite ? "저장" : "확인";
     $("setupTitle").textContent = f.label; $("facNameLabel").textContent = f.nameLabel; $("facName").placeholder = f.namePh;
-    $("bgReset").hidden = !LS.get("fp2-bg-" + S.fac, "");
+    $("sizeLabel").textContent = f.sizeLabel; $("span").placeholder = f.sizePh; $("sizeHelp").textContent = f.sizeHelp;
+    $("span").inputMode = f.sizeInt ? "numeric" : "decimal";
+    $("bgReset").hidden = !LS.get("fp2-bg-tunnel", "");
+    document.querySelector(".bgtools").hidden = fac !== "tunnel";
+    $("bermField").hidden = !f.berms;
   }
 
   function renderMember() {
-    $("memberLead").textContent = `${S.facName} · span ${S.span}`;
+    $("memberLead").textContent = `${S.facName} · ${sizeName(S.fac)} ${S.span}` + (FAC[S.fac] && FAC[S.fac].berms ? ` · 소단 ${S.berms || 0}` : "");
     const cnt = countBy((r) => r.facName + "|" + r.member);
-    const kindLabel = { span: "span 번호 선택", ends: "시점부 · 종점부", "": "구분 없음" };
-    $("memberGrid").innerHTML = memberList(S.fac).map(([m, k]) => {
+    const kindLabel = { span: "span 번호 선택", range20: `${STEP} 단위 구간 선택`, ends: "시점부 · 종점부", "": "바로 촬영" };
+    $("memberGrid").innerHTML = memberList(S.fac, S.berms).map(([m, k]) => {
       const c = cnt[S.facName + "|" + m];
       return `<button class="mbtn${S.member === m ? " last" : ""}" data-member="${esc(m)}"><b>${esc(m)}</b><small>${kindLabel[k]}</small>` +
         `<small class="c">${c ? `${c}장` : "&nbsp;"}</small></button>`; }).join("");
@@ -597,16 +737,19 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   function renderDetail() {
     const kind = subKind(S.fac, S.member);
     $("detailTitle").textContent = S.member; $("detailLead").textContent = S.facName;
-    $("spanBox").hidden = kind !== "span"; $("endsBox").hidden = kind !== "ends";
+    const grid = kind === "span" || kind === "range20";
+    $("spanBox").hidden = !grid; $("endsBox").hidden = kind !== "ends";
     const cnt = countBy(keyOf);
-    if (kind === "span") {
+    if (grid) {
       let h = "", done = 0;
       const desc = LS.get("fp2-desc", false);
       document.querySelectorAll("[data-order]").forEach((b) => b.setAttribute("aria-pressed", (b.dataset.order === "desc") === desc));
-      for (let j = 1; j <= S.span; j++) { const i = desc ? S.span + 1 - j : j; const c = cnt[`${S.facName}|${S.member}|${i}`]; if (c) done++;
-        h += `<button class="key${c ? " has" : ""}" data-span="${i}" aria-pressed="${String(i) === S.sub}">${i}${c ? `<span class="n">${c}</span>` : ""}</button>`; }
-      $("spanGrid").innerHTML = h;
-      $("spanDone").textContent = `${done} / ${S.span} 촬영`;
+      const opts = subOptions(kind, S.span); if (desc) opts.reverse();
+      for (const v of opts) { const c = cnt[`${S.facName}|${S.member}|${v}`]; if (c) done++;
+        h += `<button class="key${c ? " has" : ""}" data-span="${esc(v)}" aria-pressed="${v === S.sub}">${esc(v)}${c ? `<span class="n">${c}</span>` : ""}</button>`; }
+      $("spanGrid").innerHTML = h; $("spanGrid").classList.toggle("wide", kind === "range20");
+      $("gridLabel").textContent = kind === "range20" ? `${sizeName(S.fac)} 구간` : "span 번호";
+      $("spanDone").textContent = `${done} / ${opts.length} 촬영`;
     } else if (kind === "ends") {
       document.querySelectorAll("[data-end]").forEach((b) => { const v = b.dataset.end, c = cnt[`${S.facName}|${S.member}|${v}`];
         b.setAttribute("aria-pressed", S.sub === v); b.querySelector("small").textContent = c ? `${c}장` : "사진 없음"; });
@@ -617,20 +760,30 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     $("hereCount").textContent = ok ? `${cnt[curKey()] || 0}장` : "";
     const rec = ok ? sorted(all().filter((r) => keyOf(r) === curKey())).slice(-10).reverse() : [];
     $("recent").innerHTML = rec.map((r) => `<div class="tile"><button class="open" data-id="${r.id}" aria-label="사진 보기"><img src="${thumbSrc(r)}" alt=""></button>` +
-      `<button class="del" data-del="${r.id}" aria-label="사진 삭제">−</button></div>`).join("");
+      starBtn(r) + `<button class="del" data-del="${r.id}" aria-label="사진 삭제">−</button></div>`).join("");
   }
 
   function renderGallery() {
     const byFac = countBy((r) => r.facName), facs = Object.keys(byFac).sort((a, b) => a.localeCompare(b, "ko"));
-    if (S.galFilter && !byFac[S.galFilter]) S.galFilter = null;
-    $("galChips").innerHTML = facs.length > 1 ? `<button class="chip" data-gal="" aria-pressed="${!S.galFilter}">전체<small>${S.items.size}</small></button>` +
+    const favN = all().filter((r) => r.fav).length;
+    if (S.galFilter && S.galFilter !== "__fav" && !byFac[S.galFilter]) S.galFilter = null;
+    $("galChips").innerHTML = S.items.size ? `<button class="chip" data-gal="" aria-pressed="${!S.galFilter}">전체<small>${S.items.size}</small></button>` +
+      `<button class="chip" data-gal="__fav" aria-pressed="${S.galFilter === "__fav"}">★ 즐겨찾기<small>${favN}</small></button>` +
       facs.map((f) => `<button class="chip" data-gal="${esc(f)}" aria-pressed="${S.galFilter === f}">${esc(f)}<small>${byFac[f]}</small></button>`).join("") : "";
-    const list = sorted(all().filter((r) => !S.galFilter || r.facName === S.galFilter));
-    if (!list.length) { $("galList").innerHTML = `<div class="empty"><b>아직 사진이 없습니다</b>시설물과 부재를 고른 뒤 사진을 찍어 보세요.</div>`; return; }
+    const one = S.galFilter && S.galFilter !== "__fav";
+    $("galBar").hidden = !one;
+    if (one) $("galEdit").textContent = `✎ ${S.galFilter} 정보 수정`;
+    const list = sorted(all().filter((r) => !S.galFilter || (S.galFilter === "__fav" ? r.fav : r.facName === S.galFilter)));
+    if (!list.length) {
+      $("galList").innerHTML = S.galFilter === "__fav"
+        ? `<div class="empty"><b>즐겨찾기한 사진이 없습니다</b>사진 왼쪽 위 ☆를 누르면 여기에 모입니다.</div>`
+        : `<div class="empty"><b>아직 사진이 없습니다</b>시설물과 부재를 고른 뒤 사진을 찍어 보세요.</div>`;
+      return;
+    }
     const groups = new Map(); for (const r of list) { const k = keyOf(r); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
     $("galList").innerHTML = [...groups.values()].map((rs) => `<div class="group"><h3>${esc(pathOf(rs[0]))}<span>${rs.length}장</span></h3><div class="thumbs">` +
       rs.map((r) => `<div class="thumb"><button class="open" data-id="${r.id}" aria-label="사진 보기"><img loading="lazy" src="${thumbSrc(r)}" alt=""></button>` +
-        `<span class="dot${r.synced ? " ok" : ""}"></span><button class="del" data-del="${r.id}" aria-label="사진 삭제">−</button></div>`).join("") + `</div></div>`).join("");
+        `<span class="dot${r.synced ? " ok" : ""}"></span>${starBtn(r)}<button class="del" data-del="${r.id}" aria-label="사진 삭제">−</button></div>`).join("") + `</div></div>`).join("");
   }
 
   function renderExport() {
@@ -647,6 +800,8 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
       tree += `<b>${esc(clean(f))}/</b>\n`;
       ms.forEach(([m, v], i) => { tree += `${i === ms.length - 1 ? "└" : "├"}─ ${esc(m)}/  ${v.subs.size ? `${[...v.subs].sort(subCmp).slice(0, 4).join(", ")}${v.subs.size > 4 ? " …" : ""} · ` : ""}${v.n}장\n`; });
     }
+    const favN = all().filter((r) => r.fav && sel.has(r.facName)).length;
+    if (favN) tree += `<b>즐겨찾기/</b>  ${favN}장 (사본)\n`;
     $("tree").innerHTML = facs.length ? tree : "내보낼 사진이 없습니다.";
     $("exportBtn").disabled = !total;
     const bytes = all().filter((r) => sel.has(r.facName)).reduce((s, r) => s + (r.size || 0), 0);
@@ -656,7 +811,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
 
   function render() {
     renderHeader();
-    ({ home: renderHome, setup: renderSetup, member: renderMember, detail: renderDetail, gallery: renderGallery, export: renderExport })[S.screen]();
+    ({ home: renderHome, sites: renderSites, setup: renderSetup, member: renderMember, detail: renderDetail, gallery: renderGallery, export: renderExport })[S.screen]();
   }
 
   // ---------- capture ----------
@@ -702,7 +857,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     try {
       const up = await cloud.assets.upload(blob, { type });
       await cloud.db.collection("shots").doc(r.id).set({ fac: r.fac, facName: r.facName, span: r.span, member: r.member, sub: r.sub || "",
-        memo: r.memo || "", takenAt: r.takenAt, type, name: r.name || "", assetId: up.id, thumb: r.thumb || "" });
+        memo: r.memo || "", takenAt: r.takenAt, type, name: r.name || "", assetId: up.id, thumb: r.thumb || "", fav: !!r.fav });
       r.assetId = up.id; r.synced = true; await idbPut(r);
     } catch (e) {
       const code = e && e.code;
@@ -715,8 +870,14 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
       if (ch.type === "removed") { const r = S.items.get(id); if (r) { S.items.delete(id); if (r.local) idbDel(id); } continue; }
       if (!d.facName || !d.member || !d.assetId) continue;
       const r = S.items.get(id);
-      if (r) { if (!r.synced || r.assetId !== d.assetId) { r.assetId = d.assetId; r.synced = true; if (r.local) idbPut(r); } }
-      else S.items.set(id, { id, fac: d.fac, facName: d.facName, span: d.span, member: d.member, sub: d.sub || "", memo: d.memo || "",
+      if (r) {
+        let ch2 = false;
+        if (!r.synced || r.assetId !== d.assetId) { r.assetId = d.assetId; r.synced = true; ch2 = true; }
+        for (const k of ["facName", "span", "member", "sub"]) if (d[k] !== undefined && d[k] !== r[k]) { r[k] = d[k]; ch2 = true; }
+        if (d.fav !== undefined && !!d.fav !== !!r.fav) { r.fav = !!d.fav; ch2 = true; }
+        if (ch2 && r.local) idbPut(r);
+      }
+      else S.items.set(id, { id, fac: d.fac, facName: d.facName, span: d.span, member: d.member, sub: d.sub || "", memo: d.memo || "", fav: !!d.fav,
         takenAt: d.takenAt || 0, type: d.type, name: d.name, assetId: d.assetId, thumb: d.thumb || "", synced: true });
     }
     render();
@@ -727,6 +888,17 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     if (cloud.db && r.synced) { try { await cloud.db.collection("shots").doc(id).delete(); } catch {} }
     if (cloud.assets && r.assetId) { try { await cloud.assets.delete(r.assetId); } catch {} }
     render();
+  }
+
+  async function removeMany(ids) {
+    const recs = ids.map((id) => S.items.get(id)).filter(Boolean);
+    for (const r of recs) S.items.delete(r.id);
+    await tx(["shots", "blobs"], "readwrite", (t) => { for (const r of recs) { t.objectStore("shots").delete(r.id); t.objectStore("blobs").delete(r.id); } });
+    render();
+    for (const r of recs) {
+      if (cloud.db && r.synced) { try { await cloud.db.collection("shots").doc(r.id).delete(); } catch {} }
+      if (cloud.assets && r.assetId) { try { await cloud.assets.delete(r.assetId); } catch {} }
+    }
   }
 
   // ---------- export ----------
@@ -789,15 +961,18 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     if (!list.length) return;
     $("exportBtn").disabled = true; prog.textContent = "사진 크기 확인 중…";
     const seq = {}, q = (s) => `"${String(s || "").replace(/"/g, '""')}"`;
-    const csv = ["시설물,시설물명,부재,구분,파일,촬영시각,메모"], files = [];
+    const csv = ["시설물,시설물명,부재,구분,파일,촬영시각,메모,즐겨찾기"], files = [], favFiles = [];
     for (const r of list) {
       const k = keyOf(r); seq[k] = (seq[k] || 0) + 1;
       const name = clean(r.facName), mem = clean(r.member), sub = r.sub ? clean(r.sub) : "";
       const dir = [name, mem, sub].filter(Boolean).join("/");
       const path = `${dir}/${[name, mem, sub, pad(seq[k], 3)].filter(Boolean).join("_")}.${extOf(r)}`;
-      files.push({ r, path, size: await sizeOf(r) });
-      csv.push([FAC[r.fac] ? FAC[r.fac].label : r.fac, q(r.facName), q(r.member), q(r.sub), q(path), human(r.takenAt), q(r.memo)].join(","));
+      const size = await sizeOf(r);
+      files.push({ r, path, size });
+      if (r.fav) favFiles.push({ r, path: "즐겨찾기/" + path.split("/").pop(), size });
+      csv.push([FAC[r.fac] ? FAC[r.fac].label : r.fac, q(r.facName), q(r.member), q(r.sub), q(path), human(r.takenAt), q(r.memo), r.fav ? "Y" : ""].join(","));
     }
+    files.push(...favFiles);
     const parts = []; let cur = null;
     for (const f of files) {
       if (!cur || (cur.bytes + f.size > PART_BYTES && cur.files.length)) { cur = { files: [], bytes: 0, state: "idle" }; parts.push(cur); }
@@ -876,6 +1051,82 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     el.textContent = txt || (total ? `저장된 사진 약 ${fmtSize(total)}` : "");
   }
 
+  // ---------- 클라우드에 바뀐 정보 반영 (Claude 안의 버전만) ----------
+  async function cloudPatch(recs, pick) {
+    if (!cloud.db) return;
+    for (const r of recs) { if (!r.synced) continue; try { await cloud.db.collection("shots").doc(r.id).update(pick(r)); } catch {} }
+  }
+
+  // ---------- 즐겨찾기 ----------
+  function paintSheetFav(r) { const b = $("sheetFav"); b.setAttribute("aria-pressed", !!r.fav); b.textContent = r.fav ? "★ 즐겨찾기됨" : "☆ 즐겨찾기"; }
+  async function toggleFav(id) {
+    const r = S.items.get(id); if (!r) return;
+    r.fav = !r.fav; if (r.local) await idbPut(r);
+    cloudPatch([r], (x) => ({ fav: !!x.fav }));
+    toast(r.fav ? "즐겨찾기에 추가했습니다" : "즐겨찾기에서 뺐습니다");
+    if (S.sheetId === id) paintSheetFav(r);
+    plan = null; render();
+  }
+
+  // ---------- 정보 수정 ----------
+  let editCtx = null;
+  const optHtml = (vals, cur) => vals.map((v) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(v)}</option>`).join("");
+  function openEdit(ctx) {
+    editCtx = ctx; $("eErr").textContent = ""; $("eYes").dataset.armed = "";
+    const f = FAC[ctx.fac];
+    {
+      const r = S.items.get(ctx.id);
+      $("eTitle").textContent = "사진 정보 수정"; $("eSub").textContent = "이 사진 한 장만 바뀝니다";
+      $("eBody").innerHTML = `<div class="field"><label for="eName">${f.nameLabel}</label><input class="input" id="eName" type="text" maxlength="40" autocomplete="off" value="${esc(r.facName)}"></div>` +
+        `<div class="field"><label for="eMember">부재</label><select class="select" id="eMember">${optHtml(memberList(r.fac, Math.max(((sitesOf(r.fac).find((x) => x.name === r.facName)) || {}).berms || 0, bermNo(r.member))).map((m) => m[0]), r.member)}</select></div>` +
+        `<div class="field" id="eSubWrap"><label for="eSubSel" id="eSubLabel">구분</label><select class="select" id="eSubSel"></select></div>`;
+      fillSubSel(r.sub);
+      $("eMember").addEventListener("change", () => fillSubSel(null));
+    }
+    $("editDlg").hidden = false; setTimeout(() => $("eName").focus(), 50);
+  }
+  function fillSubSel(cur) {
+    const r = S.items.get(editCtx.id), kind = subKind(r.fac, $("eMember").value);
+    const vals = kind === "ends" ? ["시점부", "종점부"] : subOptions(kind, r.span);
+    if (cur && !vals.includes(cur) && kind !== "") vals.unshift(cur); // 범위 밖에 있던 값도 그대로 고를 수 있게
+    $("eSubWrap").hidden = !vals.length;
+    $("eSubLabel").textContent = kind === "span" ? "span 번호" : kind === "range20" ? `${sizeName(r.fac)} 구간` : "위치";
+    $("eSubSel").innerHTML = optHtml(vals, cur || vals[0]);
+  }
+  const closeEdit = () => { $("editDlg").hidden = true; editCtx = null; };
+  // 연장이 바뀌면 20 단위 구간 이름을 새 연장에 맞게 바꿈 (예: 20~37 → 20~40)
+  function remapSub(fac, member, sub, size) {
+    const kind = subKind(fac, member);
+    if (kind === "range20" && sub) { const a = parseFloat(sub); const hit = rangeList(size).find((l) => parseFloat(l) === a); return hit || sub; }
+    return sub;
+  }
+  const outOfRange = (r, size) => { const kind = subKind(r.fac, r.member);
+    return (kind === "span" && +r.sub > size) || (kind === "range20" && r.sub && !rangeList(size).includes(r.sub)); };
+
+  $("editForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); if (!editCtx) return;
+    const ctx = editCtx, f = FAC[ctx.fac], name = $("eName").value.trim();
+    if (!name) { $("eErr").textContent = `${f.nameLabel}을 입력하세요.`; $("eName").focus(); return; }
+    {
+      const r = S.items.get(ctx.id); if (!r) { closeEdit(); return; }
+      r.facName = name; r.member = $("eMember").value; r.sub = $("eSubWrap").hidden ? "" : $("eSubSel").value;
+      if (r.local) await idbPut(r);
+      cloudPatch([r], (x) => ({ facName: x.facName, member: x.member, sub: x.sub || "" }));
+      closeEdit(); plan = null; render(); toast("사진 정보를 고쳤습니다");
+      if (S.sheetId === r.id) { $("sheetPath").textContent = pathOf(r); }
+    }
+  });
+  $("eNo").addEventListener("click", closeEdit);
+  $("editDlg").addEventListener("click", (e) => { if (e.target === $("editDlg")) closeEdit(); });
+  $("editFacBtn").addEventListener("click", () => openSetup({ fac: S.fac, name: S.facName, size: S.span, berms: S.berms }));
+  $("galEdit").addEventListener("click", () => {
+    const r = all().find((x) => x.facName === S.galFilter); if (!r) return;
+    const x = sitesOf(r.fac).find((y) => y.name === r.facName);
+    openSetup({ fac: r.fac, name: r.facName, size: (x && x.size) || r.span, berms: x ? x.berms : 0 });
+  });
+  $("sheetFav").addEventListener("click", () => { if (S.sheetId) toggleFav(S.sheetId); });
+  $("sheetEdit").addEventListener("click", () => { const r = S.items.get(S.sheetId); if (r) openEdit({ mode: "photo", fac: r.fac, id: r.id }); });
+
   // ---------- viewer ----------
   function openSheet(id) {
     const r = S.items.get(id); if (!r) return; S.sheetId = id;
@@ -883,7 +1134,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     fullSrc(r).then((u) => { if (S.sheetId === id && u) $("sheetImg").src = u; else if (u.startsWith("blob:")) URL.revokeObjectURL(u); });
     $("sheetInfo").textContent = human(r.takenAt) + (r.memo ? ` · ${r.memo}` : "") + (r.synced ? " · 백업됨" : " · 이 기기에만 있음");
     const del = $("sheetDel"); del.classList.remove("armed"); del.textContent = "삭제";
-    $("sheet").hidden = false;
+    paintSheetFav(r); $("sheet").hidden = false;
   }
   const closeSheet = () => { const img = $("sheetImg"); if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
     img.removeAttribute("src"); $("sheet").hidden = true; S.sheetId = null; };
@@ -895,24 +1146,81 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     const fac = b.dataset.fac;
     if (!FAC[fac].members) { toast(`${FAC[fac].label} 입력 항목은 아직 준비 중입니다`); return; }
     if (S.fac !== fac) { S.fac = fac; S.facName = ""; S.span = 0; S.member = null; S.sub = null; }
-    $("facName").value = ""; $("span").value = ""; $("setupErr").textContent = "";
+    go("sites");
+  }));
+  $("resume").addEventListener("click", () => { S.stack = ["home", "sites", "member"]; enterDetail(false); });
+
+  function openSetup(edit) {
+    S.editSite = edit || null;
+    $("facName").value = edit ? edit.name : ""; $("span").value = edit ? String(edit.size || "") : "";
+    $("berms").value = edit && edit.berms !== undefined ? String(edit.berms) : ""; $("berms").classList.remove("bad");
+    $("setupErr").textContent = ""; $("setupBtn").dataset.armed = "";
     $("facName").classList.remove("bad"); $("span").classList.remove("bad");
     go("setup");
-  }));
-  $("resume").addEventListener("click", () => { S.stack = ["home", "setup", "member"]; enterDetail(false); });
-
-  $("setupForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = $("facName").value.trim(), sp = parseInt($("span").value, 10);
-    $("facName").classList.toggle("bad", !name); $("span").classList.toggle("bad", !(sp >= 1 && sp <= 999));
-    if (!name) { $("setupErr").textContent = `${FAC[S.fac].nameLabel}을 입력하세요.`; $("facName").focus(); return; }
-    if (!(sp >= 1 && sp <= 999)) { $("setupErr").textContent = "span은 1부터 999 사이의 숫자로 입력하세요."; $("span").focus(); return; }
-    $("setupErr").textContent = "";
-    if (name !== S.facName) { S.member = null; S.sub = null; }
-    S.facName = name; S.span = sp; saveSetup();
-    $("facName").value = ""; $("span").value = ""; // 입력칸은 넘어가면서 비움
-    go("member");
+  }
+  $("addSite").addEventListener("click", () => openSetup(null));
+  $("siteList").addEventListener("click", async (e) => {
+    const ed = e.target.closest("[data-site-edit]");
+    if (ed) { const x = sitesOf(S.fac).find((y) => y.name === ed.dataset.siteEdit); if (x) openSetup({ fac: S.fac, name: x.name, size: x.size, berms: x.berms }); return; }
+    const del = e.target.closest("[data-site-del]");
+    if (del) {
+      const name = del.dataset.siteDel, n = +del.dataset.n;
+      if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = n ? `사진 ${n}장도 함께 삭제됩니다 · 한 번 더 누르면 삭제` : "한 번 더 누르면 삭제"; return; }
+      saveSites(loadSites().filter((x) => !(x.fac === S.fac && x.name === name)));
+      const ids = all().filter((r) => r.fac === S.fac && r.facName === name).map((r) => r.id);
+      if (S.facName === name) { S.facName = ""; S.member = null; S.sub = null; saveSetup(); }
+      await removeMany(ids); toast(`${name}을(를) 삭제했습니다`); render(); return;
+    }
+    const op = e.target.closest("[data-site]"); if (!op) return;
+    const x = sitesOf(S.fac).find((y) => y.name === op.dataset.site); if (!x) return;
+    if (S.facName !== x.name) { S.member = null; S.sub = null; }
+    S.facName = x.name; S.span = x.size; S.berms = x.berms || 0; saveSetup(); go("member");
   });
+
+  $("setupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fac = setupFac(), f = FAC[fac], name = $("facName").value.trim();
+    const sp = parseSize(fac, $("span").value), okSize = !isNaN(sp), btn = $("setupBtn");
+    $("facName").classList.toggle("bad", !name); $("span").classList.toggle("bad", !okSize);
+    if (!name) { $("setupErr").textContent = `${f.nameLabel}을 입력하세요.`; $("facName").focus(); return; }
+    if (!okSize) { $("setupErr").textContent = sizeErr(fac); $("span").focus(); return; }
+    let berms = 0;
+    if (f.berms) {
+      const raw = $("berms").value.trim(); berms = /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
+      const okB = berms >= 0 && berms <= BERM_MAX; $("berms").classList.toggle("bad", !okB);
+      if (!okB) { $("setupErr").textContent = `소단은 0부터 ${BERM_MAX} 사이의 정수로 입력하세요.`; $("berms").focus(); return; }
+    }
+    if (!S.editSite) {
+      // 새로 만들기
+      if (siteExists(fac, name)) { $("setupErr").textContent = `이미 있는 ${f.nameLabel}입니다. 목록에서 골라 주세요.`; $("facName").classList.add("bad"); return; }
+      $("setupErr").textContent = "";
+      upsertSite(fac, name, sp, undefined, berms);
+      S.fac = fac; S.facName = name; S.span = sp; S.berms = berms; S.member = null; S.sub = null; saveSetup();
+      $("facName").value = ""; $("span").value = ""; $("berms").value = "";
+      S.stack = ["home", "sites"]; go("member", false);
+      return;
+    }
+    // 수정 (기존 정보와 사진을 함께 업데이트)
+    const old = S.editSite, recs = all().filter((r) => r.fac === fac && r.facName === old.name);
+    const warns = [];
+    if (name !== old.name && siteExists(fac, name)) warns.push(`이미 있는 ${f.nameLabel}입니다. 저장하면 두 ${f.label}이 하나로 합쳐집니다.`);
+    const outside = recs.filter((r) => outOfRange({ ...r, sub: remapSub(r.fac, r.member, r.sub, sp) }, sp)).length;
+    if (outside) warns.push(`새 ${f.sizeLabel} 범위 밖에 있는 사진이 ${outside}장 있습니다(번호는 그대로 유지).`);
+    const lostB = f.berms ? recs.filter((r) => bermNo(r.member) > berms).length : 0;
+    if (lostB) warns.push(`${berms}소단보다 큰 소단에서 찍은 사진이 ${lostB}장 있습니다(사진은 그대로 남습니다).`);
+    if (warns.length && !btn.dataset.armed) { $("setupErr").textContent = warns.join(" ") + " 계속하려면 저장을 한 번 더 누르세요."; btn.dataset.armed = "1"; return; }
+    btn.dataset.armed = ""; $("setupErr").textContent = "";
+    upsertSite(fac, name, sp, old.name, berms);
+    for (const r of recs) { r.facName = name; r.span = sp; r.sub = remapSub(r.fac, r.member, r.sub, sp); }
+    if (S.fac === fac && S.facName === old.name) { S.facName = name; S.span = sp; S.berms = berms; S.sub = remapSub(S.fac, S.member, S.sub, sp); saveSetup(); }
+    if (S.galFilter === old.name) S.galFilter = name;
+    await idbPutMany(recs.filter((r) => r.local));
+    cloudPatch(recs, (r) => ({ facName: r.facName, span: r.span, sub: r.sub || "" }));
+    S.editSite = null; plan = null; $("facName").value = ""; $("span").value = ""; $("berms").value = "";
+    toast(recs.length ? `수정했습니다 · 사진 ${recs.length}장에 적용` : "수정했습니다");
+    back();
+  });
+  for (const id of ["facName", "span", "berms"]) $(id).addEventListener("input", () => { $("setupBtn").dataset.armed = ""; });
   try { localStorage.removeItem("fp2-recent"); } catch {}
 
   // ---------- 배경 사진 ----------
@@ -921,16 +1229,16 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     const f = e.target.files[0]; e.target.value = ""; if (!f) return;
     const url = await makeThumb(f, 1400, 0.8);
     if (!url) { toast("이 사진은 배경으로 쓸 수 없습니다. 다른 사진을 골라 주세요."); return; }
-    LS.set("fp2-bg-" + S.fac, url);
-    if (LS.get("fp2-bg-" + S.fac, "") !== url) { toast("사진이 너무 커서 저장하지 못했습니다. 다른 사진을 골라 주세요."); return; }
+    LS.set("fp2-bg-tunnel", url);
+    if (LS.get("fp2-bg-tunnel", "") !== url) { toast("사진이 너무 커서 저장하지 못했습니다. 다른 사진을 골라 주세요."); return; }
     drawBg(true); render(); toast("배경을 바꿨습니다");
   });
-  $("bgReset").addEventListener("click", () => { LS.set("fp2-bg-" + S.fac, ""); drawBg(true); render(); });
+  $("bgReset").addEventListener("click", () => { LS.set("fp2-bg-tunnel", ""); drawBg(true); render(); });
   window.addEventListener("resize", () => { if (document.body.classList.contains("on-photo")) drawBg(); });
 
   function enterDetail(push = true) {
     const kind = subKind(S.fac, S.member);
-    if (kind === "span") { if (!(+S.sub >= 1 && +S.sub <= S.span)) S.sub = "1"; }
+    if (kind === "span" || kind === "range20") { const o = subOptions(kind, S.span); if (!o.includes(S.sub)) S.sub = o[0] || ""; }
     else if (kind === "ends") { if (S.sub !== "시점부" && S.sub !== "종점부") S.sub = ""; }
     else S.sub = "";
     saveSetup(); go("detail", push);
@@ -957,7 +1265,8 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   $("cNo").addEventListener("click", closeConfirm);
   $("confirm").addEventListener("click", (e) => { if (e.target === $("confirm")) closeConfirm(); });
   $("cYes").addEventListener("click", async () => { const id = pendingDel; closeConfirm(); if (id) { await removeItem(id); toast("사진을 삭제했습니다"); } });
-  const onTiles = (e) => { const d = e.target.closest("[data-del]"); if (d) { askDelete(d.dataset.del); return; }
+  const onTiles = (e) => { const fv = e.target.closest("[data-fav]"); if (fv) { toggleFav(fv.dataset.fav); return; }
+    const d = e.target.closest("[data-del]"); if (d) { askDelete(d.dataset.del); return; }
     const b = e.target.closest("[data-id]"); if (b) openSheet(b.dataset.id); };
   $("recent").addEventListener("click", onTiles);
   $("galList").addEventListener("click", onTiles);
@@ -970,7 +1279,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   $("sheetClose").addEventListener("click", closeSheet);
   $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
   $("sheetDel").addEventListener("click", () => { const id = S.sheetId; closeSheet(); askDelete(id); });
-  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (!$("confirm").hidden) closeConfirm(); else if (!$("sheet").hidden) closeSheet(); });
+  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (!$("editDlg").hidden) closeEdit(); else if (!$("confirm").hidden) closeConfirm(); else if (!$("sheet").hidden) closeSheet(); });
   window.addEventListener("online", syncLoop);
   setInterval(syncLoop, 60000);
 
