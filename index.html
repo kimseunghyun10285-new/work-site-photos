@@ -14,7 +14,6 @@
 <title>현장 사진 분류함</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
-<script src="jszip.min.js"></script>
 <style>
 /* Layout: step-by-step field flow — sticky header with back + context, big screen title, one decision per screen, fixed shutter on the last step */
 :root {
@@ -192,6 +191,15 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
 .tree { font-family: var(--f-mono); font-size: 13px; line-height: 1.75; margin-top: 14px; color: var(--ink-2); overflow-x: auto; white-space: pre; }
 .tree b { color: var(--ink); font-weight: 600; }
+.parts { display: grid; gap: 8px; margin-top: 4px; }
+.prow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.prow b { display: block; font-family: var(--f-mono); font-size: 14px; }
+.prow small { color: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.pbtn { flex: none; min-width: 92px; border: 1px solid var(--teal); background: var(--surface); color: var(--teal); border-radius: 8px; padding: 10px 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pbtn.go { background: var(--teal); color: var(--teal-ink); }
+.pbtn.ok { border-color: var(--ok); color: var(--ok); }
+.pbtn:disabled { opacity: .6; }
+.storage { margin-top: 12px; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .progress { margin-top: 10px; font-size: 13px; color: var(--ink-2); min-height: 1.4em; font-variant-numeric: tabular-nums; }
 .note { font-size: 12px; color: var(--ink-2); margin-top: 14px; }
 .note code { font-family: var(--f-mono); }
@@ -322,8 +330,10 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
       <div class="tree" id="tree"></div>
       <button class="primary" id="exportBtn" style="margin-top:14px">ZIP 파일 만들기</button>
       <div class="progress" id="progress"></div>
+      <div class="parts" id="parts" hidden></div>
+      <div class="storage" id="storage"></div>
     </div>
-    <p class="note">파일 이름은 <code>대전1터널_라이닝_12_001.jpg</code> 형식이며, 촬영 목록(사진목록.csv)이 함께 들어갑니다.</p>
+    <p class="note">파일 이름은 <code>대전1터널_라이닝_12_001.jpg</code> 형식이며, 촬영 목록(사진목록.csv)이 함께 들어갑니다. 사진이 많으면 약 1GB씩 여러 ZIP으로 나눠 저장되고, 모두 같은 곳에 풀면 폴더가 하나로 합쳐집니다.</p>
   </section>
 </div>
 
@@ -639,7 +649,9 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     }
     $("tree").innerHTML = facs.length ? tree : "내보낼 사진이 없습니다.";
     $("exportBtn").disabled = !total;
-    $("exportBtn").textContent = total ? `ZIP 파일 만들기 · ${total}장` : "ZIP 파일 만들기";
+    const bytes = all().filter((r) => sel.has(r.facName)).reduce((s, r) => s + (r.size || 0), 0);
+    $("exportBtn").textContent = total ? `ZIP 파일 만들기 · ${total}장${bytes ? ` · 약 ${fmtSize(bytes)}` : ""}` : "ZIP 파일 만들기";
+    renderParts(); renderStorage();
   }
 
   function render() {
@@ -654,7 +666,7 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
     for (const f of files) {
       if (!f || !f.size) continue;
       const rec = { id: uid(), fac: S.fac, facName: S.facName, span: S.span, member: S.member, sub: S.sub || "", memo,
-        takenAt: Date.now() + n, type: f.type || "image/jpeg", name: f.name || "", local: true, synced: false };
+        takenAt: Date.now() + n, type: f.type || "image/jpeg", name: f.name || "", size: f.size, local: true, synced: false };
       rec.thumb = await makeThumb(f);
       await idbAdd(rec, f); S.items.set(rec.id, rec); n++;
     }
@@ -718,55 +730,150 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   }
 
   // ---------- export ----------
-  async function doExport() {
-    const btn = $("exportBtn"), prog = $("progress");
+  // ---------- export (나눠서 ZIP 만들기) ----------
+  // 사진을 메모리에 모두 올리지 않고 한 장씩 처리하는 ZIP 작성기(무압축). 사진이 수천 장이어도 휴대폰이 버팁니다.
+  const PART_BYTES = 1000 * 1024 * 1024; // 한 ZIP 최대 약 1GB
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  async function crc32Blob(blob) {
+    let c = 0xFFFFFFFF; const CH = 4 << 20;
+    for (let o = 0; o < blob.size; o += CH) {
+      const b = new Uint8Array(await blob.slice(o, o + CH).arrayBuffer());
+      for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8);
+    }
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function ZipWriter() {
+    const enc = new TextEncoder(), parts = [], central = []; let offset = 0, count = 0, cdSize = 0;
+    this.add = (name, blob, crc, when) => {
+      const nm = enc.encode(name), d = when || new Date();
+      const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+      const date = (Math.max(0, d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+      h.setUint16(10, time, true); h.setUint16(12, date, true); h.setUint32(14, crc, true);
+      h.setUint32(18, blob.size, true); h.setUint32(22, blob.size, true); h.setUint16(26, nm.length, true);
+      parts.push(h.buffer, nm, blob);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+      c.setUint16(12, time, true); c.setUint16(14, date, true); c.setUint32(16, crc, true);
+      c.setUint32(20, blob.size, true); c.setUint32(24, blob.size, true); c.setUint16(28, nm.length, true); c.setUint32(42, offset, true);
+      central.push(c.buffer, nm); cdSize += 46 + nm.length;
+      offset += 30 + nm.length + blob.size; count++;
+    };
+    this.blob = () => {
+      const e = new DataView(new ArrayBuffer(22));
+      e.setUint32(0, 0x06054b50, true); e.setUint16(8, count, true); e.setUint16(10, count, true);
+      e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+      return new Blob([...parts, ...central, e.buffer], { type: "application/zip" });
+    };
+  }
+  const fmtSize = (b) => b >= 1 << 30 ? (b / (1 << 30)).toFixed(2) + "GB" : Math.max(1, Math.round(b / (1 << 20))) + "MB";
+  const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  async function sizeOf(r) {
+    if (r.size) return r.size;
+    if (r.local) { const b = await getBlob(r.id); if (b) { r.size = b.size; idbPut(r); return b.size; } }
+    return 4 << 20;
+  }
+  async function blobOf(r) {
+    if (r.local) { const b = await getBlob(r.id); if (b) return b; }
+    if (r.assetId) { const res = await fetch("/_blob/" + r.assetId); if (res.ok) return await res.blob(); }
+    throw new Error("missing");
+  }
+
+  let plan = null, planBusy = false;
+  async function makePlan() {
+    const prog = $("progress");
     const facs = Object.keys(countBy((r) => r.facName));
     const sel = S.expSel.size ? S.expSel : new Set(facs);
     const list = sorted(all().filter((r) => sel.has(r.facName)));
-    if (!window.JSZip) { prog.textContent = "압축 도구를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침하세요."; return; }
     if (!list.length) return;
-    btn.disabled = true;
-    const zip = new JSZip(), seq = {}, csv = ["시설물,시설물명,부재,구분,파일,촬영시각,메모"];
-    let done = 0, failed = 0;
-    const q = (s) => `"${String(s || "").replace(/"/g, '""')}"`;
+    $("exportBtn").disabled = true; prog.textContent = "사진 크기 확인 중…";
+    const seq = {}, q = (s) => `"${String(s || "").replace(/"/g, '""')}"`;
+    const csv = ["시설물,시설물명,부재,구분,파일,촬영시각,메모"], files = [];
     for (const r of list) {
       const k = keyOf(r); seq[k] = (seq[k] || 0) + 1;
       const name = clean(r.facName), mem = clean(r.member), sub = r.sub ? clean(r.sub) : "";
-      const fname = [name, mem, sub, pad(seq[k], 3)].filter(Boolean).join("_") + "." + extOf(r);
       const dir = [name, mem, sub].filter(Boolean).join("/");
-      try {
-        const blob = (r.local && await getBlob(r.id)) || await (await fetch("/_blob/" + r.assetId)).blob();
-        zip.file(`${dir}/${fname}`, blob);
-        csv.push([FAC[r.fac] ? FAC[r.fac].label : r.fac, q(r.facName), q(r.member), q(r.sub), q(`${dir}/${fname}`), human(r.takenAt), q(r.memo)].join(","));
-      } catch { failed++; }
-      done++; prog.textContent = `사진 모으는 중 ${done} / ${list.length}`;
+      const path = `${dir}/${[name, mem, sub, pad(seq[k], 3)].filter(Boolean).join("_")}.${extOf(r)}`;
+      files.push({ r, path, size: await sizeOf(r) });
+      csv.push([FAC[r.fac] ? FAC[r.fac].label : r.fac, q(r.facName), q(r.member), q(r.sub), q(path), human(r.takenAt), q(r.memo)].join(","));
     }
-    zip.file("사진목록.csv", "﻿" + csv.join("\n"));
-    const out = await zip.generateAsync({ type: "blob", compression: "STORE" }, (m) => { prog.textContent = `압축하는 중 ${Math.round(m.percent)}%`; });
+    const parts = []; let cur = null;
+    for (const f of files) {
+      if (!cur || (cur.bytes + f.size > PART_BYTES && cur.files.length)) { cur = { files: [], bytes: 0, state: "idle" }; parts.push(cur); }
+      cur.files.push(f); cur.bytes += f.size;
+    }
     const d = new Date(), base = sel.size === 1 ? clean([...sel][0]) : "현장사진";
-    const zipName = `${base}_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.zip`;
-    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
-    try {
-      if (dl) { await dl.save({ filename: zipName, data: out }); prog.textContent = `${zipName} 저장 완료${failed ? ` · ${failed}장 누락` : ""}`; }
-      else if (!window.claude) {
-        // 아이폰은 공유 시트로 '파일에 저장', 안드로이드는 다운로드 폴더로 저장
-        const file = new File([out], zipName, { type: "application/zip" });
-        const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-        if (ios && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: zipName }); prog.textContent = `${zipName} 준비 완료 · '파일에 저장'을 고르면 저장됩니다`; }
-          catch (err) { prog.textContent = err && err.name === "AbortError" ? "저장을 취소했습니다." : "저장하지 못했습니다. 다시 시도하세요."; }
-        } else {
-          const u = URL.createObjectURL(out), a = document.createElement("a"); a.href = u; a.download = zipName;
-          document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 60000);
-          prog.textContent = `${zipName} 다운로드를 시작했습니다${failed ? ` · ${failed}장 누락` : ""}`;
-        }
-        LS.set("fp2-exported", S.items.size);
-      }
-      else prog.textContent = "이 화면에서는 파일 저장을 쓸 수 없습니다.";
-    } catch (e) {
-      prog.textContent = e && e.code === "declined" ? "저장을 취소했습니다." : e && e.code === "rate_limited" ? "저장 창이 이미 열려 있습니다. 잠시 후 다시 누르세요." : "저장하지 못했습니다. 다시 시도하세요.";
+    const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+    parts.forEach((p, i) => { p.name = parts.length > 1 ? `${base}_${stamp}_${i + 1}of${parts.length}.zip` : `${base}_${stamp}.zip`; });
+    plan = { parts, csv: "﻿" + csv.join("\n") };
+    prog.textContent = parts.length > 1 ? `사진이 많아서 ${parts.length}개 ZIP으로 나눴습니다. 순서대로 준비 → 저장을 눌러 주세요.` : "";
+    $("exportBtn").disabled = false; renderParts();
+  }
+
+  async function buildPart(i) {
+    const p = plan && plan.parts[i]; if (!p || planBusy) return;
+    planBusy = true; p.state = "building"; p.missing = 0; renderParts();
+    const zip = new ZipWriter(); let n = 0;
+    for (const f of p.files) {
+      try {
+        const blob = await blobOf(f.r);
+        let crc = f.r.crc;
+        if (crc === undefined || f.r.crcSize !== blob.size) { crc = await crc32Blob(blob); f.r.crc = crc; f.r.crcSize = blob.size; if (f.r.local) idbPut(f.r); }
+        zip.add(f.path, blob, crc, new Date(f.r.takenAt));
+      } catch { p.missing++; }
+      n++; p.done = n; if (n % 5 === 0 || n === p.files.length) renderParts();
     }
-    btn.disabled = false;
+    const csvBlob = new Blob([plan.csv], { type: "text/csv" });
+    zip.add("사진목록.csv", csvBlob, await crc32Blob(csvBlob), new Date());
+    p.blob = zip.blob(); p.state = "ready"; planBusy = false; renderParts();
+  }
+
+  async function saveFile(blob, name) {
+    if (window.claude && window.claude.use) {
+      const dl = await window.claude.use("downloads");
+      if (!dl) throw { msg: "이 화면에서는 파일 저장을 쓸 수 없습니다." };
+      await dl.save({ filename: name, data: blob }); return "saved";
+    }
+    const file = new File([blob], name, { type: "application/zip" });
+    if (isIOS() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return "shared"; }
+    const u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 120000);
+    return "downloaded";
+  }
+  async function savePart(i) {
+    const p = plan && plan.parts[i]; if (!p || !p.blob) return;
+    try { const how = await saveFile(p.blob, p.name); p.state = "saved"; p.how = how; }
+    catch (e) {
+      $("progress").textContent = (e && (e.code === "declined" || e.name === "AbortError")) ? "저장을 취소했습니다. 다시 누르면 저장할 수 있습니다."
+        : e && e.code === "rate_limited" ? "저장 창이 이미 열려 있습니다. 잠시 후 다시 누르세요." : (e && e.msg) || "저장하지 못했습니다. 다시 시도하세요.";
+    }
+    renderParts();
+  }
+
+  function renderParts() {
+    const box = $("parts");
+    if (!plan) { box.hidden = true; box.innerHTML = ""; return; }
+    box.hidden = false;
+    box.innerHTML = plan.parts.map((p, i) => {
+      const label = plan.parts.length > 1 ? `${i + 1} / ${plan.parts.length}` : "ZIP";
+      const info = `사진 ${p.files.length}장 · ${fmtSize(p.bytes)}`;
+      let btn;
+      if (p.state === "building") btn = `<button class="pbtn" disabled>준비 중 ${p.done || 0}/${p.files.length}</button>`;
+      else if (p.state === "ready") btn = `<button class="pbtn go" data-save="${i}">저장</button>`;
+      else if (p.state === "saved") btn = `<button class="pbtn ok" data-save="${i}">✓ ${p.how === "shared" ? "보냄" : "저장됨"}</button>`;
+      else btn = `<button class="pbtn" data-build="${i}"${planBusy ? " disabled" : ""}>준비</button>`;
+      return `<div class="prow"><div><b>${label}</b><small>${info}${p.missing ? ` · ${p.missing}장 누락` : ""}</small></div>${btn}</div>`;
+    }).join("");
+  }
+
+  async function renderStorage() {
+    const el = $("storage"); if (!el) return;
+    let txt = "";
+    const total = all().reduce((s, r) => s + (r.size || 0), 0);
+    try { if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate();
+      if (e.quota) txt = `휴대폰 저장 공간 · 앱 사용 ${fmtSize(e.usage || 0)} / 사용 가능 ${fmtSize(e.quota)}`; } } catch {}
+    el.textContent = txt || (total ? `저장된 사진 약 ${fmtSize(total)}` : "");
   }
 
   // ---------- viewer ----------
@@ -856,8 +963,10 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   $("galList").addEventListener("click", onTiles);
   $("galChips").addEventListener("click", (e) => { const b = e.target.closest("[data-gal]"); if (!b) return; S.galFilter = b.dataset.gal || null; render(); });
   $("expChips").addEventListener("click", (e) => { const b = e.target.closest("[data-exp]"); if (!b) return;
-    const f = b.dataset.exp; if (!f) S.expSel.clear(); else S.expSel.has(f) ? S.expSel.delete(f) : S.expSel.add(f); $("progress").textContent = ""; render(); });
-  $("exportBtn").addEventListener("click", doExport);
+    if (planBusy) return; const f = b.dataset.exp; if (!f) S.expSel.clear(); else S.expSel.has(f) ? S.expSel.delete(f) : S.expSel.add(f); plan = null; $("progress").textContent = ""; render(); });
+  $("exportBtn").addEventListener("click", () => { if (!planBusy) { plan = null; makePlan(); } });
+  $("parts").addEventListener("click", (e) => { const b = e.target.closest("[data-build]"); if (b) { buildPart(+b.dataset.build); return; }
+    const s2 = e.target.closest("[data-save]"); if (s2) savePart(+s2.dataset.save); });
   $("sheetClose").addEventListener("click", closeSheet);
   $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
   $("sheetDel").addEventListener("click", () => { const id = S.sheetId; closeSheet(); askDelete(id); });
@@ -866,9 +975,11 @@ body:not(.on-photo) .bgtools button { color: var(--ink-2); }
   setInterval(syncLoop, 60000);
 
   // ---------- boot ----------
-  // 오프라인 실행 준비 + 휴대폰이 저장 공간을 정리할 때 사진을 지우지 않도록 요청
-  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  // 설치형(홈 화면) 버전: 오프라인 실행 준비 + 저장 공간 정리 때 사진을 지우지 않도록 요청
+  if (!window.claude) {
+    if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  }
   go("home", false);
   // 카메라를 연 사이 휴대폰이 앱을 종료했다면, 다시 열릴 때 촬영하던 화면으로 바로 복귀
   const camAt = LS.get("fp2-camera", 0);
